@@ -379,7 +379,7 @@ main {
 .form-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 label span,
@@ -555,13 +555,31 @@ fieldset {
 
 .owner-item,
 .reservation-item {
-  align-items: center;
+  align-items: flex-start;
   background: #fff;
   border: 1px solid var(--line);
   display: flex;
   gap: 12px;
   justify-content: space-between;
   padding: 15px;
+}
+
+.reservation-detail {
+  display: grid;
+  gap: 10px;
+}
+
+.reservation-meta {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reservation-note {
+  background: var(--mist);
+  border-radius: 8px;
+  display: block;
+  padding: 10px 12px;
 }
 
 .service-editor-item {

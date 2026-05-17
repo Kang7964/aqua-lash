@@ -190,6 +190,7 @@ bookingForm.addEventListener("submit", (event) => {
     time: slot.time,
     label: slot.label,
     customerName: data.get("customerName").trim(),
+    phone: (data.get("phone") || "").trim(),
     contact: data.get("contact").trim(),
     note: data.get("note").trim(),
     createdAt: new Date().toISOString(),
@@ -352,10 +353,15 @@ function renderReservations() {
     .map(
       (reservation) => `
         <article class="reservation-item">
-          <div>
+          <div class="reservation-detail">
             <strong>${escapeHtml(reservation.customerName)} · ${escapeHtml(reservation.serviceName)}</strong>
-            <span>${formatDate(reservation.date)} ${escapeHtml(reservation.time)} · ${escapeHtml(reservation.contact)}</span>
-            ${reservation.note ? `<span>${escapeHtml(reservation.note)}</span>` : ""}
+            <div class="reservation-meta">
+              <span>日期：${formatDate(reservation.date)} ${escapeHtml(reservation.time)}</span>
+              <span>Line / IG：${escapeHtml(reservation.contact || "未填")}</span>
+              <span>電話：${escapeHtml(reservation.phone || "未填")}</span>
+              <span>地點：${escapeHtml(reservation.label || "未標註")}</span>
+            </div>
+            ${reservation.note ? `<span class="reservation-note">備註：${escapeHtml(reservation.note)}</span>` : ""}
           </div>
           <button class="danger-button" type="button" data-delete-reservation="${reservation.id}">刪除</button>
         </article>

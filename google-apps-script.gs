@@ -1,5 +1,6 @@
 const STATE_SHEET = "AquaLashState";
 const RESERVATION_SHEET = "Reservations";
+const SPREADSHEET_ID = "17n7By6g7Fn-3Q0Gt5BwIvO1GvxaYgS2WogzbVFK94a8";
 
 const DEFAULT_STATE = {
   services: [],
@@ -48,7 +49,7 @@ function doPost(event) {
 }
 
 function setupAquaLashSheets() {
-  const spreadsheet = SpreadsheetApp.getActive();
+  const spreadsheet = getSpreadsheet_();
   const stateSheet = getOrCreateSheet_(spreadsheet, STATE_SHEET);
   stateSheet.clear();
   stateSheet.getRange(1, 1, 1, 2).setValues([["key", "json"]]);
@@ -60,13 +61,13 @@ function setupAquaLashSheets() {
 
   const reservationSheet = getOrCreateSheet_(spreadsheet, RESERVATION_SHEET);
   reservationSheet.clear();
-  reservationSheet.getRange(1, 1, 1, 9).setValues([
-    ["建立時間", "姓名", "聯絡方式", "服務", "日期", "時間", "地點/標籤", "備註", "預約ID"],
+  reservationSheet.getRange(1, 1, 1, 10).setValues([
+    ["建立時間", "姓名", "電話", "Line / IG", "服務", "日期", "時間", "地點/標籤", "備註", "預約ID"],
   ]);
 }
 
 function getState() {
-  const spreadsheet = SpreadsheetApp.getActive();
+  const spreadsheet = getSpreadsheet_();
   const sheet = getOrCreateSheet_(spreadsheet, STATE_SHEET);
   const values = sheet.getDataRange().getValues();
   const state = Object.assign({}, DEFAULT_STATE);
@@ -92,7 +93,7 @@ function saveState(state) {
     reservations: Array.isArray(state.reservations) ? state.reservations : [],
   };
 
-  const spreadsheet = SpreadsheetApp.getActive();
+  const spreadsheet = getSpreadsheet_();
   const stateSheet = getOrCreateSheet_(spreadsheet, STATE_SHEET);
   stateSheet.clear();
   stateSheet.getRange(1, 1, 1, 2).setValues([["key", "json"]]);
@@ -108,8 +109,8 @@ function saveState(state) {
 function writeReservationSheet_(spreadsheet, reservations) {
   const sheet = getOrCreateSheet_(spreadsheet, RESERVATION_SHEET);
   sheet.clear();
-  sheet.getRange(1, 1, 1, 9).setValues([
-    ["建立時間", "姓名", "聯絡方式", "服務", "日期", "時間", "地點/標籤", "備註", "預約ID"],
+  sheet.getRange(1, 1, 1, 10).setValues([
+    ["建立時間", "姓名", "電話", "Line / IG", "服務", "日期", "時間", "地點/標籤", "備註", "預約ID"],
   ]);
 
   if (!reservations.length) return;
@@ -117,6 +118,7 @@ function writeReservationSheet_(spreadsheet, reservations) {
   const rows = reservations.map((item) => [
     item.createdAt || "",
     item.customerName || "",
+    item.phone || "",
     item.contact || "",
     item.serviceName || "",
     item.date || "",
@@ -125,11 +127,15 @@ function writeReservationSheet_(spreadsheet, reservations) {
     item.note || "",
     item.id || "",
   ]);
-  sheet.getRange(2, 1, rows.length, 9).setValues(rows);
+  sheet.getRange(2, 1, rows.length, 10).setValues(rows);
 }
 
 function getOrCreateSheet_(spreadsheet, name) {
   return spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
+}
+
+function getSpreadsheet_() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
 function jsonp(callback, payload) {
