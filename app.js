@@ -388,6 +388,10 @@ function resetServiceForm() {
 
 async function loadCloudState() {
   if (!CLOUD_API_URL) return;
+  if (!isValidCloudUrl()) {
+    formMessage.textContent = "雲端設定網址不正確，請使用 Apps Script Web App 的 /exec 網址。";
+    return;
+  }
 
   formMessage.textContent = "正在同步雲端資料...";
   try {
@@ -416,9 +420,15 @@ function persistState() {
   save(STORAGE_KEYS.services, services);
   save(STORAGE_KEYS.slots, slots);
   save(STORAGE_KEYS.reservations, reservations);
-  if (CLOUD_API_URL) {
+  if (CLOUD_API_URL && isValidCloudUrl()) {
     cloudPost("saveState", { services, slots, reservations });
+  } else if (CLOUD_API_URL) {
+    formMessage.textContent = "雲端設定網址不正確，資料已先保存在這台裝置。";
   }
+}
+
+function isValidCloudUrl() {
+  return /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(CLOUD_API_URL);
 }
 
 function cloudGet(action) {
