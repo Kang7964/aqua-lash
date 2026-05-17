@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aqua Lash Lab 預約</title>
+    <link rel="preconnect" href="https://images.pexels.com" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Aqua Lash Lab 首頁">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="logo-main">AiL</span>
+          <span class="logo-sub">Aqua Lash Lab</span>
+        </span>
+        <span>
+          <span class="brand-name">Aqua Lash Lab</span>
+          <span class="brand-note">日式美睫預約</span>
+        </span>
+      </a>
+
+      <nav class="header-actions" aria-label="網站操作">
+        <a href="#booking">預約</a>
+        <button class="owner-toggle" id="ownerToggle" type="button" aria-pressed="false" title="切換店家模式">
+          <span aria-hidden="true">⚙</span>
+          <span>店家</span>
+        </button>
+      </nav>
+    </header>
+
+    <div class="password-modal is-hidden" id="passwordModal" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">
+      <form class="password-card" id="passwordForm">
+        <div class="section-heading">
+          <p class="eyebrow">Owner</p>
+          <h2 id="passwordTitle">店家模式</h2>
+        </div>
+        <label>
+          <span>請輸入店家密碼</span>
+          <input id="ownerPassword" type="password" inputmode="numeric" autocomplete="current-password" required />
+        </label>
+        <p class="password-message" id="passwordMessage" role="status"></p>
+        <div class="service-actions">
+          <button class="primary-button" type="submit">開啟店家模式</button>
+          <button class="text-button" id="closePasswordModal" type="button">取消</button>
+        </div>
+      </form>
+    </div>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="heroTitle">
+        <div class="hero-copy">
+          <p class="eyebrow">Aqua Lash Lab</p>
+          <h1 id="heroTitle">讓眼神乾淨、有光，像剛睡飽一樣自然。</h1>
+          <p>日式睫毛嫁接與補睫服務，選擇想要的款式與時段後留下聯絡方式，我們會再與你確認細節。</p>
+          <div class="hero-actions">
+            <a class="primary-link" href="#booking">立即預約</a>
+            <a class="ghost-link" href="#services">查看服務</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="studio-strip" aria-label="店家資訊">
+        <div>
+          <span>Service</span>
+          <strong>日式嫁接 / 補睫 / 卸睫</strong>
+        </div>
+        <div>
+          <span>Location</span>
+          <strong>台北預約制</strong>
+        </div>
+        <div>
+          <span>Status</span>
+          <strong>開放預約中</strong>
+        </div>
+      </section>
+
+      <section class="booking-shell" id="booking">
+        <div class="booking-panel">
+          <div class="section-heading">
+            <p class="eyebrow">Booking</p>
+            <h2>預約時段</h2>
+          </div>
+
+          <form id="bookingForm" class="booking-form">
+            <label>
+              <span>服務項目</span>
+              <select id="service" name="service" required></select>
+            </label>
+
+            <div class="form-grid">
+              <label>
+                <span>預約日期</span>
+                <select id="dateSelect" name="date" required></select>
+              </label>
+              <label>
+                <span>姓名</span>
+                <input id="customerName" name="customerName" autocomplete="name" required />
+              </label>
+              <label>
+                <span>Line / IG</span>
+                <input id="contact" name="contact" placeholder="@aqua.lash.lab" required />
+              </label>
+            </div>
+
+            <fieldset>
+              <legend>可預約時間</legend>
+              <div class="slot-grid" id="slotGrid"></div>
+            </fieldset>
+
+            <label>
+              <span>備註</span>
+              <textarea id="note" name="note" rows="3" placeholder="想做自然款、濃密款，或需要先卸睫都可以寫在這裡"></textarea>
+            </label>
+
+            <button class="primary-button" type="submit">送出預約</button>
+            <p class="form-message" id="formMessage" role="status"></p>
+          </form>
+        </div>
+
+        <aside class="summary-panel" id="services">
+          <div class="section-heading">
+            <p class="eyebrow">Services</p>
+            <h2>服務選單</h2>
+          </div>
+          <div class="service-list" id="serviceList"></div>
+        </aside>
+      </section>
+
+      <section class="owner-panel is-hidden" id="ownerPanel" aria-labelledby="ownerTitle">
+        <div class="section-heading">
+          <p class="eyebrow">Owner</p>
+          <h2 id="ownerTitle">店家時段管理</h2>
+        </div>
+        <form id="slotForm" class="owner-form">
+          <label>
+            <span>開放日期</span>
+            <input id="ownerDate" type="date" required />
+          </label>
+          <label>
+            <span>開始時間</span>
+            <input id="ownerTime" type="time" required />
+          </label>
+          <label>
+            <span>備註標籤</span>
+            <input id="ownerLabel" placeholder="例如：台北 / 板橋 / 晚間加開" />
+          </label>
+          <button class="secondary-button" type="submit">新增可預約時段</button>
+        </form>
+        <div class="owner-list" id="ownerSlotList"></div>
+      </section>
+
+      <section class="owner-panel is-hidden" id="servicePanel" aria-labelledby="serviceEditorTitle">
+        <div class="section-heading">
+          <p class="eyebrow">Menu</p>
+          <h2 id="serviceEditorTitle">服務選單管理</h2>
+        </div>
+        <form id="serviceForm" class="service-form">
+          <input id="serviceId" type="hidden" />
+          <label>
+            <span>服務名稱</span>
+            <input id="serviceName" placeholder="例如：日式自然款" required />
+          </label>
+          <label>
+            <span>施作時間</span>
+            <input id="serviceDuration" placeholder="例如：約 90 分鐘" required />
+          </label>
+          <label>
+            <span>價格</span>
+            <input id="servicePrice" placeholder="例如：NT$1,280" required />
+          </label>
+          <label class="service-description-field">
+            <span>服務說明</span>
+            <textarea id="serviceDescription" rows="3" placeholder="簡短描述這個服務適合誰、效果如何" required></textarea>
+          </label>
+          <div class="service-actions">
+            <button class="secondary-button" id="saveServiceButton" type="submit">新增服務</button>
+            <button class="text-button" id="cancelServiceEdit" type="button">取消編輯</button>
+          </div>
+        </form>
+        <div class="owner-list" id="ownerServiceList"></div>
+      </section>
+
+      <section class="owner-panel is-hidden" id="reservationPanel" aria-labelledby="reservationTitle">
+        <div class="section-heading">
+          <p class="eyebrow">Records</p>
+          <h2 id="reservationTitle">預約紀錄</h2>
+        </div>
+        <div class="reservation-list" id="reservationList"></div>
+      </section>
+    </main>
+
+    <script src="./cloud-config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
