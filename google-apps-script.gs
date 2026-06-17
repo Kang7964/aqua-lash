@@ -3,6 +3,7 @@ const RESERVATION_SHEET = "Reservations";
 const SPREADSHEET_ID = "17n7By6g7Fn-3Q0Gt5BwIvO1GvxaYgS2WogzbVFK94a8";
 
 const DEFAULT_STATE = {
+  siteContent: {},
   services: [],
   slots: [],
   reservations: [],
@@ -53,7 +54,8 @@ function setupAquaLashSheets() {
   const stateSheet = getOrCreateSheet_(spreadsheet, STATE_SHEET);
   stateSheet.clear();
   stateSheet.getRange(1, 1, 1, 2).setValues([["key", "json"]]);
-  stateSheet.getRange(2, 1, 3, 2).setValues([
+  stateSheet.getRange(2, 1, 4, 2).setValues([
+    ["siteContent", "{}"],
     ["services", "[]"],
     ["slots", "[]"],
     ["reservations", "[]"],
@@ -79,7 +81,7 @@ function getState() {
     try {
       state[key] = JSON.parse(json);
     } catch (error) {
-      state[key] = [];
+      state[key] = key === "siteContent" ? {} : [];
     }
   });
 
@@ -88,6 +90,7 @@ function getState() {
 
 function saveState(state) {
   const normalized = {
+    siteContent: state.siteContent && typeof state.siteContent === "object" ? state.siteContent : {},
     services: Array.isArray(state.services) ? state.services : [],
     slots: Array.isArray(state.slots) ? state.slots : [],
     reservations: Array.isArray(state.reservations) ? state.reservations : [],
@@ -97,7 +100,8 @@ function saveState(state) {
   const stateSheet = getOrCreateSheet_(spreadsheet, STATE_SHEET);
   stateSheet.clear();
   stateSheet.getRange(1, 1, 1, 2).setValues([["key", "json"]]);
-  stateSheet.getRange(2, 1, 3, 2).setValues([
+  stateSheet.getRange(2, 1, 4, 2).setValues([
+    ["siteContent", JSON.stringify(normalized.siteContent)],
     ["services", JSON.stringify(normalized.services)],
     ["slots", JSON.stringify(normalized.slots)],
     ["reservations", JSON.stringify(normalized.reservations)],

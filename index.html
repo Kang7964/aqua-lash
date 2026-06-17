@@ -49,12 +49,12 @@
     <main id="top">
       <section class="hero" aria-labelledby="heroTitle">
         <div class="hero-copy">
-          <p class="eyebrow">Aqua Lash Lab</p>
+          <p class="eyebrow" id="heroEyebrow">Aqua Lash Lab</p>
           <h1 id="heroTitle">讓眼神乾淨、有光，像剛睡飽一樣自然。</h1>
-          <p>日式睫毛嫁接與補睫服務，選擇想要的款式與時段後留下聯絡方式，我們會再與你確認細節。</p>
+          <p id="heroDescription">日式睫毛嫁接與補睫服務，選擇想要的款式與時段後留下聯絡方式，我們會再與你確認細節。</p>
           <div class="hero-actions">
-            <a class="primary-link" href="#booking">立即預約</a>
-            <a class="ghost-link" href="#services">查看服務</a>
+            <a class="primary-link" id="heroPrimaryButton" href="#booking">立即預約</a>
+            <a class="ghost-link" id="heroSecondaryButton" href="#services">查看服務</a>
           </div>
         </div>
       </section>
@@ -151,6 +151,44 @@
           <button class="secondary-button" type="submit">新增可預約時段</button>
         </form>
         <div class="owner-list" id="ownerSlotList"></div>
+      </section>
+
+      <section class="owner-panel is-hidden" id="contentPanel" aria-labelledby="contentEditorTitle">
+        <div class="section-heading">
+          <p class="eyebrow">Home</p>
+          <h2 id="contentEditorTitle">首頁內容管理</h2>
+        </div>
+        <form id="contentForm" class="service-form">
+          <label>
+            <span>品牌小字</span>
+            <input id="contentEyebrow" placeholder="例如：Aqua Lash Lab" required />
+          </label>
+          <label>
+            <span>主要按鈕文字</span>
+            <input id="contentPrimaryButton" placeholder="例如：立即預約" required />
+          </label>
+          <label>
+            <span>次要按鈕文字</span>
+            <input id="contentSecondaryButton" placeholder="例如：查看服務" required />
+          </label>
+          <label class="content-wide-field">
+            <span>主標題</span>
+            <input id="contentTitle" placeholder="例如：讓眼神乾淨、有光，像剛睡飽一樣自然。" required />
+          </label>
+          <label class="content-wide-field">
+            <span>介紹文字</span>
+            <textarea id="contentDescription" rows="3" placeholder="輸入首頁介紹文字" required></textarea>
+          </label>
+          <label class="content-wide-field">
+            <span>首頁大圖網址</span>
+            <input id="contentImageUrl" type="url" placeholder="https://..." required />
+          </label>
+          <div class="service-actions">
+            <button class="secondary-button" type="submit">儲存首頁內容</button>
+            <button class="text-button" id="resetContentButton" type="button">恢復預設</button>
+          </div>
+          <p class="form-message" id="contentMessage" role="status"></p>
+        </form>
       </section>
 
       <section class="owner-panel is-hidden" id="servicePanel" aria-labelledby="serviceEditorTitle">

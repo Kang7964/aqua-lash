@@ -2,11 +2,21 @@ const STORAGE_KEYS = {
   slots: "aqua-lash-slots",
   reservations: "aqua-lash-reservations",
   services: "aqua-lash-services",
+  siteContent: "aqua-lash-site-content",
   ownerUnlocked: "aqua-lash-owner-unlocked",
 };
 
 const OWNER_PASSWORD = "939393";
 const CLOUD_API_URL = window.AQUA_LASH_API_URL || "";
+
+const defaultSiteContent = {
+  eyebrow: "Aqua Lash Lab",
+  title: "讓眼神乾淨、有光，像剛睡飽一樣自然。",
+  description: "日式睫毛嫁接與補睫服務，選擇想要的款式與時段後留下聯絡方式，我們會再與你確認細節。",
+  primaryButton: "立即預約",
+  secondaryButton: "查看服務",
+  imageUrl: "https://images.pexels.com/photos/34930118/pexels-photo-34930118.jpeg?auto=compress&cs=tinysrgb&w=1800",
+};
 
 const defaultServices = [
   {
@@ -40,12 +50,19 @@ const defaultSlots = [
   slotForOffset(8, "19:00", "晚間加開"),
 ];
 
-let services = load(STORAGE_KEYS.services, defaultServices);
-let slots = load(STORAGE_KEYS.slots, defaultSlots);
-let reservations = load(STORAGE_KEYS.reservations, []);
+let siteContent = loadObject(STORAGE_KEYS.siteContent, defaultSiteContent);
+let services = loadArray(STORAGE_KEYS.services, defaultServices);
+let slots = loadArray(STORAGE_KEYS.slots, defaultSlots);
+let reservations = loadArray(STORAGE_KEYS.reservations, []);
 let selectedDate = "";
 let ownerMode = sessionStorage.getItem(STORAGE_KEYS.ownerUnlocked) === "true";
 
+const hero = document.querySelector(".hero");
+const heroEyebrow = document.querySelector("#heroEyebrow");
+const heroTitle = document.querySelector("#heroTitle");
+const heroDescription = document.querySelector("#heroDescription");
+const heroPrimaryButton = document.querySelector("#heroPrimaryButton");
+const heroSecondaryButton = document.querySelector("#heroSecondaryButton");
 const serviceSelect = document.querySelector("#service");
 const dateSelect = document.querySelector("#dateSelect");
 const slotGrid = document.querySelector("#slotGrid");
@@ -59,6 +76,7 @@ const ownerPassword = document.querySelector("#ownerPassword");
 const passwordMessage = document.querySelector("#passwordMessage");
 const closePasswordModal = document.querySelector("#closePasswordModal");
 const ownerPanel = document.querySelector("#ownerPanel");
+const contentPanel = document.querySelector("#contentPanel");
 const servicePanel = document.querySelector("#servicePanel");
 const reservationPanel = document.querySelector("#reservationPanel");
 const slotForm = document.querySelector("#slotForm");
@@ -74,7 +92,17 @@ const serviceDescription = document.querySelector("#serviceDescription");
 const saveServiceButton = document.querySelector("#saveServiceButton");
 const cancelServiceEdit = document.querySelector("#cancelServiceEdit");
 const ownerDate = document.querySelector("#ownerDate");
+const contentForm = document.querySelector("#contentForm");
+const contentEyebrow = document.querySelector("#contentEyebrow");
+const contentTitle = document.querySelector("#contentTitle");
+const contentDescription = document.querySelector("#contentDescription");
+const contentPrimaryButton = document.querySelector("#contentPrimaryButton");
+const contentSecondaryButton = document.querySelector("#contentSecondaryButton");
+const contentImageUrl = document.querySelector("#contentImageUrl");
+const contentMessage = document.querySelector("#contentMessage");
+const resetContentButton = document.querySelector("#resetContentButton");
 
+renderSiteContent();
 renderServices();
 renderBookingControls();
 renderOwnerSlots();
@@ -115,9 +143,7 @@ passwordForm.addEventListener("submit", (event) => {
 closePasswordModal.addEventListener("click", closeOwnerPasswordModal);
 
 passwordModal.addEventListener("click", (event) => {
-  if (event.target === passwordModal) {
-    closeOwnerPasswordModal();
-  }
+  if (event.target === passwordModal) closeOwnerPasswordModal();
 });
 
 slotForm.addEventListener("submit", (event) => {
@@ -141,6 +167,28 @@ slotForm.addEventListener("submit", (event) => {
   ownerDate.value = date;
   renderBookingControls(date);
   renderOwnerSlots();
+});
+
+contentForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  siteContent = {
+    eyebrow: contentEyebrow.value.trim(),
+    title: contentTitle.value.trim(),
+    description: contentDescription.value.trim(),
+    primaryButton: contentPrimaryButton.value.trim(),
+    secondaryButton: contentSecondaryButton.value.trim(),
+    imageUrl: contentImageUrl.value.trim(),
+  };
+  renderSiteContent();
+  persistState();
+  contentMessage.textContent = "首頁內容已儲存。";
+});
+
+resetContentButton.addEventListener("click", () => {
+  siteContent = { ...defaultSiteContent };
+  renderSiteContent();
+  persistState();
+  contentMessage.textContent = "已恢復預設首頁內容。";
 });
 
 serviceForm.addEventListener("submit", (event) => {
@@ -206,9 +254,25 @@ bookingForm.addEventListener("submit", (event) => {
   renderReservations();
 });
 
+function renderSiteContent() {
+  heroEyebrow.textContent = siteContent.eyebrow || defaultSiteContent.eyebrow;
+  heroTitle.textContent = siteContent.title || defaultSiteContent.title;
+  heroDescription.textContent = siteContent.description || defaultSiteContent.description;
+  heroPrimaryButton.textContent = siteContent.primaryButton || defaultSiteContent.primaryButton;
+  heroSecondaryButton.textContent = siteContent.secondaryButton || defaultSiteContent.secondaryButton;
+  hero.style.setProperty("--hero-image", `url("${siteContent.imageUrl || defaultSiteContent.imageUrl}")`);
+
+  contentEyebrow.value = siteContent.eyebrow || "";
+  contentTitle.value = siteContent.title || "";
+  contentDescription.value = siteContent.description || "";
+  contentPrimaryButton.value = siteContent.primaryButton || "";
+  contentSecondaryButton.value = siteContent.secondaryButton || "";
+  contentImageUrl.value = siteContent.imageUrl || "";
+}
+
 function renderServices() {
   serviceSelect.innerHTML = services.length
-    ? services.map((service) => `<option value="${service.id}">${service.name}｜${service.price}</option>`).join("")
+    ? services.map((service) => `<option value="${service.id}">${escapeHtml(service.name)}｜${escapeHtml(service.price)}</option>`).join("")
     : `<option value="">尚未建立服務項目</option>`;
 
   serviceList.innerHTML = services.length
@@ -375,7 +439,6 @@ function renderReservations() {
       reservations = reservations.filter((item) => item.id !== button.dataset.deleteReservation);
       if (reservation) {
         slots = slots.map((slot) => (slot.id === reservation.slotId ? { ...slot, available: true } : slot));
-        persistState();
         renderBookingControls(reservation.date);
         renderOwnerSlots();
       }
@@ -404,13 +467,16 @@ async function loadCloudState() {
     const response = await cloudGet("state");
     if (!response.ok || !response.state) throw new Error(response.error || "同步失敗");
 
+    siteContent = response.state.siteContent && typeof response.state.siteContent === "object" ? { ...defaultSiteContent, ...response.state.siteContent } : siteContent;
     services = Array.isArray(response.state.services) && response.state.services.length ? response.state.services : services;
     slots = Array.isArray(response.state.slots) && response.state.slots.length ? response.state.slots : slots;
     reservations = Array.isArray(response.state.reservations) ? response.state.reservations : reservations;
 
+    save(STORAGE_KEYS.siteContent, siteContent);
     save(STORAGE_KEYS.services, services);
     save(STORAGE_KEYS.slots, slots);
     save(STORAGE_KEYS.reservations, reservations);
+    renderSiteContent();
     renderServices();
     renderBookingControls();
     renderOwnerSlots();
@@ -423,11 +489,12 @@ async function loadCloudState() {
 }
 
 function persistState() {
+  save(STORAGE_KEYS.siteContent, siteContent);
   save(STORAGE_KEYS.services, services);
   save(STORAGE_KEYS.slots, slots);
   save(STORAGE_KEYS.reservations, reservations);
   if (CLOUD_API_URL && isValidCloudUrl()) {
-    cloudPost("saveState", { services, slots, reservations });
+    cloudPost("saveState", { siteContent, services, slots, reservations });
   } else if (CLOUD_API_URL) {
     formMessage.textContent = "雲端設定網址不正確，資料已先保存在這台裝置。";
   }
@@ -501,6 +568,7 @@ function syncOwnerMode() {
   ownerToggle.setAttribute("aria-pressed", String(ownerMode));
   ownerToggle.querySelector("span:last-child").textContent = ownerMode ? "關閉" : "店家";
   ownerPanel.classList.toggle("is-hidden", !ownerMode);
+  contentPanel.classList.toggle("is-hidden", !ownerMode);
   servicePanel.classList.toggle("is-hidden", !ownerMode);
   reservationPanel.classList.toggle("is-hidden", !ownerMode);
 }
@@ -533,10 +601,19 @@ function formatDate(value) {
   }).format(new Date(`${value}T00:00:00`));
 }
 
-function load(key, fallback) {
+function loadArray(key, fallback) {
   try {
     const stored = JSON.parse(localStorage.getItem(key));
     return Array.isArray(stored) && stored.length ? stored : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function loadObject(key, fallback) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(key));
+    return stored && typeof stored === "object" && !Array.isArray(stored) ? { ...fallback, ...stored } : fallback;
   } catch {
     return fallback;
   }

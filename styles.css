@@ -170,7 +170,7 @@ main {
   align-items: end;
   background:
     linear-gradient(90deg, rgba(24, 22, 20, 0.76), rgba(24, 22, 20, 0.28) 52%, rgba(24, 22, 20, 0.06)),
-    url("https://images.pexels.com/photos/34930118/pexels-photo-34930118.jpeg?auto=compress&cs=tinysrgb&w=1800");
+    var(--hero-image, url("https://images.pexels.com/photos/34930118/pexels-photo-34930118.jpeg?auto=compress&cs=tinysrgb&w=1800"));
   background-position: center;
   background-size: cover;
   color: #fff;
@@ -513,6 +513,7 @@ fieldset {
 }
 
 .service-description-field,
+.content-wide-field,
 .service-actions {
   grid-column: 1 / -1;
 }
