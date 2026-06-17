@@ -17,6 +17,7 @@ const defaultSiteContent = {
   secondaryButton: "查看服務",
   notePlaceholder: "想做自然款、濃密款，或需要先卸睫都可以寫在這裡",
   imageUrl: "https://images.pexels.com/photos/34930118/pexels-photo-34930118.jpeg?auto=compress&cs=tinysrgb&w=1800",
+  mobileImageUrl: "",
 };
 
 const defaultServices = [
@@ -103,6 +104,8 @@ const contentSecondaryButton = document.querySelector("#contentSecondaryButton")
 const contentNotePlaceholder = document.querySelector("#contentNotePlaceholder");
 const contentImageFile = document.querySelector("#contentImageFile");
 const contentImageStatus = document.querySelector("#contentImageStatus");
+const contentMobileImageFile = document.querySelector("#contentMobileImageFile");
+const contentMobileImageStatus = document.querySelector("#contentMobileImageStatus");
 const contentMessage = document.querySelector("#contentMessage");
 const resetContentButton = document.querySelector("#resetContentButton");
 const cropModal = document.querySelector("#cropModal");
@@ -124,6 +127,7 @@ let cropState = {
   dragStartY: 0,
   startX: 0,
   startY: 0,
+  target: "desktop",
 };
 
 renderSiteContent();
@@ -208,11 +212,26 @@ contentImageFile.addEventListener("change", async () => {
   contentImageStatus.textContent = "正在開啟裁切工具...";
   try {
     siteContent = getContentFormState();
-    await openCropModal(file);
+    await openCropModal(file, "desktop");
   } catch (error) {
     contentImageStatus.textContent = "圖片讀取失敗，請換一張 JPG 或 PNG 再試。";
   } finally {
     contentImageFile.value = "";
+  }
+});
+
+contentMobileImageFile.addEventListener("change", async () => {
+  const file = contentMobileImageFile.files && contentMobileImageFile.files[0];
+  if (!file) return;
+
+  contentMobileImageStatus.textContent = "正在開啟手機直式裁切工具...";
+  try {
+    siteContent = getContentFormState();
+    await openCropModal(file, "mobile");
+  } catch (error) {
+    contentMobileImageStatus.textContent = "圖片讀取失敗，請換一張 JPG 或 PNG 再試。";
+  } finally {
+    contentMobileImageFile.value = "";
   }
 });
 
@@ -247,14 +266,23 @@ cropStage.addEventListener("pointercancel", endCropDrag);
 applyCropButton.addEventListener("click", () => {
   if (!cropState.image) return;
   try {
-    contentImageStatus.textContent = "正在自動裁切與壓縮圖片...";
-    siteContent.imageUrl = createCroppedImageDataUrl();
+    const isMobileCrop = cropState.target === "mobile";
+    const statusElement = isMobileCrop ? contentMobileImageStatus : contentImageStatus;
+    statusElement.textContent = "正在產生高畫質裁切圖片...";
+    if (isMobileCrop) {
+      siteContent.mobileImageUrl = createCroppedImageDataUrl();
+    } else {
+      siteContent.imageUrl = createCroppedImageDataUrl();
+    }
     closeCropModal();
     renderSiteContent();
     persistState();
-    contentImageStatus.textContent = "圖片已裁切並套用，請等 3 秒再重新整理。";
+    statusElement.textContent = isMobileCrop
+      ? "手機直式圖片已套用，請等 3 秒再重新整理。"
+      : "電腦橫式圖片已套用，請等 3 秒再重新整理。";
   } catch (error) {
-    contentImageStatus.textContent = "圖片處理失敗，請換一張 JPG 或 PNG 再試。";
+    const statusElement = cropState.target === "mobile" ? contentMobileImageStatus : contentImageStatus;
+    statusElement.textContent = "圖片處理失敗，請換一張 JPG 或 PNG 再試。";
   }
 });
 
@@ -341,6 +369,7 @@ function renderSiteContent() {
   heroPrimaryButton.textContent = siteContent.primaryButton || defaultSiteContent.primaryButton;
   heroSecondaryButton.textContent = siteContent.secondaryButton || defaultSiteContent.secondaryButton;
   hero.style.setProperty("--hero-image", `url("${siteContent.imageUrl || defaultSiteContent.imageUrl}")`);
+  hero.style.setProperty("--hero-mobile-image", `url("${siteContent.mobileImageUrl || siteContent.imageUrl || defaultSiteContent.imageUrl}")`);
   noteInput.placeholder = siteContent.notePlaceholder || defaultSiteContent.notePlaceholder;
 
   contentEyebrow.value = siteContent.eyebrow || "";
@@ -351,7 +380,10 @@ function renderSiteContent() {
   contentNotePlaceholder.value = siteContent.notePlaceholder || "";
   contentImageStatus.textContent = siteContent.imageUrl && siteContent.imageUrl.startsWith("data:")
     ? "目前使用已上傳圖片。重新選擇檔案即可裁切更換。"
-    : "選擇圖片後可先裁切、拖曳位置與放大縮小，再套用到首頁。";
+    : "電腦版使用橫式裁切，適合寬螢幕首頁。";
+  contentMobileImageStatus.textContent = siteContent.mobileImageUrl && siteContent.mobileImageUrl.startsWith("data:")
+    ? "目前手機版使用已上傳直式圖片。重新選擇檔案即可裁切更換。"
+    : "手機版使用直式裁切，適合手機長畫面。";
 }
 
 function renderServices() {
@@ -662,10 +694,11 @@ function getContentFormState() {
     secondaryButton: contentSecondaryButton.value.trim(),
     notePlaceholder: contentNotePlaceholder.value.trim(),
     imageUrl: siteContent.imageUrl || defaultSiteContent.imageUrl,
+    mobileImageUrl: siteContent.mobileImageUrl || "",
   };
 }
 
-function openCropModal(file) {
+function openCropModal(file, target = "desktop") {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = reject;
@@ -675,12 +708,14 @@ function openCropModal(file) {
       image.onload = () => {
         cropState.image = image;
         cropState.imageUrl = reader.result;
+        cropState.target = target;
         cropState.zoom = 1;
         cropState.x = 0;
         cropState.y = 0;
         cropState.pointerId = null;
         cropImage.src = reader.result;
         cropZoom.value = "1";
+        cropStage.classList.toggle("is-mobile-crop", target === "mobile");
         cropModal.classList.remove("is-hidden");
         requestAnimationFrame(() => {
           resetCropScale();
@@ -698,6 +733,7 @@ function closeCropModal() {
   cropModal.classList.add("is-hidden");
   cropStage.classList.remove("is-dragging");
   cropImage.removeAttribute("src");
+  cropStage.classList.remove("is-mobile-crop");
   cropState.image = null;
   cropState.imageUrl = "";
   cropState.pointerId = null;
@@ -746,7 +782,7 @@ function createCroppedImageDataUrl() {
   const displayHeight = cropState.image.height * cropState.baseScale * cropState.zoom;
   const left = rect.width / 2 - displayWidth / 2 + cropState.x;
   const top = rect.height / 2 - displayHeight / 2 + cropState.y;
-  let outputWidth = 1800;
+  let outputWidth = cropState.target === "mobile" ? 1200 : 1800;
   let dataUrl = "";
 
   do {
@@ -772,7 +808,7 @@ function createCroppedImageDataUrl() {
     }
 
     outputWidth = Math.round(outputWidth * 0.9);
-  } while (dataUrl.length > 2400000 && outputWidth >= 1200);
+  } while (dataUrl.length > 2400000 && outputWidth >= 980);
 
   if (dataUrl.length <= 4500000) return dataUrl;
   throw new Error("Image is too large");

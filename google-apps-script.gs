@@ -2,7 +2,7 @@ const STATE_SHEET = "AquaLashState";
 const IMAGE_SHEET = "AquaLashImages";
 const RESERVATION_SHEET = "Reservations";
 const SPREADSHEET_ID = "17n7By6g7Fn-3Q0Gt5BwIvO1GvxaYgS2WogzbVFK94a8";
-const IMAGE_TOKEN = "__AQUA_LASH_STORED_IMAGE__";
+const IMAGE_TOKEN_PREFIX = "__AQUA_LASH_STORED_IMAGE__:";
 const IMAGE_CHUNK_SIZE = 45000;
 
 const DEFAULT_STATE = {
@@ -83,7 +83,7 @@ function setupAquaLashSheets() {
 
   const imageSheet = getOrCreateSheet_(spreadsheet, IMAGE_SHEET);
   imageSheet.clear();
-  imageSheet.getRange(1, 1, 1, 2).setValues([["index", "chunk"]]);
+  imageSheet.getRange(1, 1, 1, 3).setValues([["key", "index", "chunk"]]);
 }
 
 function getState() {
@@ -103,8 +103,14 @@ function getState() {
     }
   });
 
-  if (state.siteContent && state.siteContent.imageUrl === IMAGE_TOKEN) {
-    state.siteContent.imageUrl = readImageChunks_(spreadsheet) || "";
+  if (state.siteContent && typeof state.siteContent === "object") {
+    Object.keys(state.siteContent).forEach(function (key) {
+      const value = state.siteContent[key];
+      if (typeof value === "string" && value.indexOf(IMAGE_TOKEN_PREFIX) === 0) {
+        const imageKey = value.slice(IMAGE_TOKEN_PREFIX.length);
+        state.siteContent[key] = readImageChunks_(spreadsheet, imageKey) || "";
+      }
+    });
   }
 
   return state;
@@ -136,44 +142,57 @@ function saveState(state) {
 
 function saveLargeSiteImage_(spreadsheet, siteContent) {
   const nextSiteContent = Object.assign({}, siteContent);
-  const imageUrl = nextSiteContent.imageUrl || "";
 
-  if (imageUrl.indexOf("data:image/") === 0) {
-    writeImageChunks_(spreadsheet, imageUrl);
-    nextSiteContent.imageUrl = IMAGE_TOKEN;
-  }
+  Object.keys(nextSiteContent).forEach(function (key) {
+    const value = nextSiteContent[key] || "";
+    if (typeof value === "string" && value.indexOf("data:image/") === 0) {
+      writeImageChunks_(spreadsheet, key, value);
+      nextSiteContent[key] = IMAGE_TOKEN_PREFIX + key;
+    }
+  });
 
   return nextSiteContent;
 }
 
-function writeImageChunks_(spreadsheet, imageData) {
+function writeImageChunks_(spreadsheet, imageKey, imageData) {
   const sheet = getOrCreateSheet_(spreadsheet, IMAGE_SHEET);
-  sheet.clear();
-  sheet.getRange(1, 1, 1, 2).setValues([["index", "chunk"]]);
+  const existingValues = sheet.getDataRange().getValues();
+  const otherRows = existingValues
+    .slice(1)
+    .filter(function (row) {
+      return row[0] && row[0] !== imageKey;
+    });
 
   const rows = [];
   for (let index = 0; index < imageData.length; index += IMAGE_CHUNK_SIZE) {
-    rows.push([rows.length, imageData.slice(index, index + IMAGE_CHUNK_SIZE)]);
+    rows.push([imageKey, rows.length, imageData.slice(index, index + IMAGE_CHUNK_SIZE)]);
   }
 
-  if (rows.length) {
-    sheet.getRange(2, 1, rows.length, 2).setValues(rows);
-  }
+  sheet.clear();
+  sheet.getRange(1, 1, 1, 3).setValues([["key", "index", "chunk"]]);
+  const nextRows = otherRows.concat(rows);
+  if (nextRows.length) sheet.getRange(2, 1, nextRows.length, 3).setValues(nextRows);
 }
 
-function readImageChunks_(spreadsheet) {
+function readImageChunks_(spreadsheet, imageKey) {
   const sheet = spreadsheet.getSheetByName(IMAGE_SHEET);
   if (!sheet) return "";
 
-  const values = sheet.getDataRange().getValues().slice(1);
+  const values = sheet
+    .getDataRange()
+    .getValues()
+    .slice(1)
+    .filter(function (row) {
+      return row[0] === imageKey;
+    });
   if (!values.length) return "";
 
   return values
     .sort(function (a, b) {
-      return Number(a[0]) - Number(b[0]);
+      return Number(a[1]) - Number(b[1]);
     })
     .map(function (row) {
-      return row[1] || "";
+      return row[2] || "";
     })
     .join("");
 }

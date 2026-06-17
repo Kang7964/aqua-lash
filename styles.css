@@ -118,6 +118,13 @@ button {
   width: 100%;
 }
 
+.crop-stage.is-mobile-crop {
+  aspect-ratio: 9 / 16;
+  margin-inline: auto;
+  max-height: min(68svh, 720px);
+  width: min(100%, 430px);
+}
+
 .crop-stage.is-dragging {
   cursor: grabbing;
 }
@@ -714,6 +721,9 @@ fieldset {
   }
 
   .hero {
+    background-image:
+      linear-gradient(90deg, rgba(24, 22, 20, 0.76), rgba(24, 22, 20, 0.28) 52%, rgba(24, 22, 20, 0.06)),
+      var(--hero-mobile-image, var(--hero-image, url("https://images.pexels.com/photos/34930118/pexels-photo-34930118.jpeg?auto=compress&cs=tinysrgb&w=1800")));
     min-height: 690px;
   }
 }
