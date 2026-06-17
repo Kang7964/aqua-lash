@@ -80,6 +80,10 @@ function setupAquaLashSheets() {
   const reservationSheet = getOrCreateSheet_(spreadsheet, RESERVATION_SHEET);
   reservationSheet.clear();
   reservationSheet.getRange(1, 1, 1, RESERVATION_HEADERS.length).setValues([RESERVATION_HEADERS]);
+
+  const imageSheet = getOrCreateSheet_(spreadsheet, IMAGE_SHEET);
+  imageSheet.clear();
+  imageSheet.getRange(1, 1, 1, 2).setValues([["index", "chunk"]]);
 }
 
 function getState() {
