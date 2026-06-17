@@ -98,7 +98,8 @@ const contentTitle = document.querySelector("#contentTitle");
 const contentDescription = document.querySelector("#contentDescription");
 const contentPrimaryButton = document.querySelector("#contentPrimaryButton");
 const contentSecondaryButton = document.querySelector("#contentSecondaryButton");
-const contentImageUrl = document.querySelector("#contentImageUrl");
+const contentImageFile = document.querySelector("#contentImageFile");
+const contentImageStatus = document.querySelector("#contentImageStatus");
 const contentMessage = document.querySelector("#contentMessage");
 const resetContentButton = document.querySelector("#resetContentButton");
 
@@ -177,11 +178,28 @@ contentForm.addEventListener("submit", (event) => {
     description: contentDescription.value.trim(),
     primaryButton: contentPrimaryButton.value.trim(),
     secondaryButton: contentSecondaryButton.value.trim(),
-    imageUrl: contentImageUrl.value.trim(),
+    imageUrl: siteContent.imageUrl || defaultSiteContent.imageUrl,
   };
   renderSiteContent();
   persistState();
   contentMessage.textContent = "首頁內容已儲存。";
+});
+
+contentImageFile.addEventListener("change", async () => {
+  const file = contentImageFile.files && contentImageFile.files[0];
+  if (!file) return;
+
+  contentImageStatus.textContent = "正在處理圖片...";
+  try {
+    siteContent.imageUrl = await compressImageToDataUrl(file);
+    renderSiteContent();
+    persistState();
+    contentImageStatus.textContent = "圖片已上傳並套用。";
+  } catch (error) {
+    contentImageStatus.textContent = "圖片處理失敗，請換一張較小的圖片再試。";
+  } finally {
+    contentImageFile.value = "";
+  }
 });
 
 resetContentButton.addEventListener("click", () => {
@@ -267,7 +285,9 @@ function renderSiteContent() {
   contentDescription.value = siteContent.description || "";
   contentPrimaryButton.value = siteContent.primaryButton || "";
   contentSecondaryButton.value = siteContent.secondaryButton || "";
-  contentImageUrl.value = siteContent.imageUrl || "";
+  contentImageStatus.textContent = siteContent.imageUrl && siteContent.imageUrl.startsWith("data:")
+    ? "目前使用已上傳圖片。重新選擇檔案即可更換。"
+    : "可上傳 JPG、PNG，系統會自動壓縮並調整成適合手機與電腦的背景圖。";
 }
 
 function renderServices() {
@@ -548,6 +568,38 @@ function cloudPost(action, payload) {
     body: formData,
   }).catch(() => {
     formMessage.textContent = "雲端儲存失敗，資料已先保存在這台裝置。";
+  });
+}
+
+function compressImageToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = reject;
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxWidth = 1200;
+        const maxHeight = 900;
+        const ratio = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
+        canvas.width = Math.max(1, Math.round(image.width * ratio));
+        canvas.height = Math.max(1, Math.round(image.height * ratio));
+
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        let quality = 0.82;
+        let dataUrl = canvas.toDataURL("image/jpeg", quality);
+        while (dataUrl.length > 45000 && quality > 0.35) {
+          quality -= 0.08;
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+        }
+        resolve(dataUrl);
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   });
 }
 

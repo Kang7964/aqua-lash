@@ -180,8 +180,9 @@
             <textarea id="contentDescription" rows="3" placeholder="輸入首頁介紹文字" required></textarea>
           </label>
           <label class="content-wide-field">
-            <span>首頁大圖網址</span>
-            <input id="contentImageUrl" type="url" placeholder="https://..." required />
+            <span>首頁大圖</span>
+            <input id="contentImageFile" type="file" accept="image/*" />
+            <small class="field-help" id="contentImageStatus">可上傳 JPG、PNG，系統會自動壓縮並調整成適合手機與電腦的背景圖。</small>
           </label>
           <div class="service-actions">
             <button class="secondary-button" type="submit">儲存首頁內容</button>

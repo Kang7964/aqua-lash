@@ -381,6 +381,20 @@ textarea {
   resize: vertical;
 }
 
+input[type="file"] {
+  align-items: center;
+  display: flex;
+  padding: 12px;
+}
+
+.field-help {
+  color: var(--muted);
+  display: block;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -613,7 +627,12 @@ fieldset {
   }
 
   .summary-panel {
+    order: -1;
     position: static;
+  }
+
+  .booking-panel {
+    order: 1;
   }
 
   .hero {
