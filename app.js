@@ -247,13 +247,14 @@ cropStage.addEventListener("pointercancel", endCropDrag);
 applyCropButton.addEventListener("click", () => {
   if (!cropState.image) return;
   try {
+    contentImageStatus.textContent = "正在自動裁切與壓縮圖片...";
     siteContent.imageUrl = createCroppedImageDataUrl();
     closeCropModal();
     renderSiteContent();
     persistState();
     contentImageStatus.textContent = "圖片已裁切並套用，請等 3 秒再重新整理。";
   } catch (error) {
-    contentImageStatus.textContent = "圖片處理失敗，請把照片裁小一點或換一張再試。";
+    contentImageStatus.textContent = "圖片處理失敗，請換一張 JPG 或 PNG 再試。";
   }
 });
 
@@ -739,36 +740,41 @@ function renderCropPreview() {
 
 function createCroppedImageDataUrl() {
   const rect = cropStage.getBoundingClientRect();
-  const outputWidth = 1200;
-  const outputHeight = Math.round(outputWidth * rect.height / rect.width);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
-  const renderScale = outputWidth / rect.width;
   const displayWidth = cropState.image.width * cropState.baseScale * cropState.zoom;
   const displayHeight = cropState.image.height * cropState.baseScale * cropState.zoom;
   const left = rect.width / 2 - displayWidth / 2 + cropState.x;
   const top = rect.height / 2 - displayHeight / 2 + cropState.y;
+  let outputWidth = 1800;
+  let dataUrl = "";
 
-  canvas.width = outputWidth;
-  canvas.height = outputHeight;
-  context.fillStyle = "#151312";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(
-    cropState.image,
-    left * renderScale,
-    top * renderScale,
-    displayWidth * renderScale,
-    displayHeight * renderScale
-  );
+  do {
+    const outputHeight = Math.round(outputWidth * rect.height / rect.width);
+    const renderScale = outputWidth / rect.width;
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    context.fillStyle = "#151312";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(
+      cropState.image,
+      left * renderScale,
+      top * renderScale,
+      displayWidth * renderScale,
+      displayHeight * renderScale
+    );
 
-  let quality = 0.78;
-  let dataUrl = canvas.toDataURL("image/jpeg", quality);
-  while (dataUrl.length > 32000 && quality > 0.3) {
-    quality -= 0.08;
+    let quality = 0.9;
     dataUrl = canvas.toDataURL("image/jpeg", quality);
-  }
+    while (dataUrl.length > 2400000 && quality > 0.82) {
+      quality -= 0.02;
+      dataUrl = canvas.toDataURL("image/jpeg", quality);
+    }
 
-  if (dataUrl.length <= 45000) return dataUrl;
+    outputWidth = Math.round(outputWidth * 0.9);
+  } while (dataUrl.length > 2400000 && outputWidth >= 1200);
+
+  if (dataUrl.length <= 4500000) return dataUrl;
   throw new Error("Image is too large");
 }
 

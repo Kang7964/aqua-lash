@@ -1,6 +1,9 @@
 const STATE_SHEET = "AquaLashState";
+const IMAGE_SHEET = "AquaLashImages";
 const RESERVATION_SHEET = "Reservations";
 const SPREADSHEET_ID = "17n7By6g7Fn-3Q0Gt5BwIvO1GvxaYgS2WogzbVFK94a8";
+const IMAGE_TOKEN = "__AQUA_LASH_STORED_IMAGE__";
+const IMAGE_CHUNK_SIZE = 45000;
 
 const DEFAULT_STATE = {
   siteContent: {},
@@ -96,10 +99,15 @@ function getState() {
     }
   });
 
+  if (state.siteContent && state.siteContent.imageUrl === IMAGE_TOKEN) {
+    state.siteContent.imageUrl = readImageChunks_(spreadsheet) || "";
+  }
+
   return state;
 }
 
 function saveState(state) {
+  const spreadsheet = getSpreadsheet_();
   const normalized = {
     siteContent: state.siteContent && typeof state.siteContent === "object" ? state.siteContent : {},
     services: Array.isArray(state.services) ? state.services : [],
@@ -107,7 +115,8 @@ function saveState(state) {
     reservations: Array.isArray(state.reservations) ? state.reservations : [],
   };
 
-  const spreadsheet = getSpreadsheet_();
+  normalized.siteContent = saveLargeSiteImage_(spreadsheet, normalized.siteContent);
+
   const stateSheet = getOrCreateSheet_(spreadsheet, STATE_SHEET);
   stateSheet.clear();
   stateSheet.getRange(1, 1, 1, 2).setValues([["key", "json"]]);
@@ -119,6 +128,50 @@ function saveState(state) {
   ]);
 
   writeReservationSheet_(spreadsheet, normalized.reservations);
+}
+
+function saveLargeSiteImage_(spreadsheet, siteContent) {
+  const nextSiteContent = Object.assign({}, siteContent);
+  const imageUrl = nextSiteContent.imageUrl || "";
+
+  if (imageUrl.indexOf("data:image/") === 0) {
+    writeImageChunks_(spreadsheet, imageUrl);
+    nextSiteContent.imageUrl = IMAGE_TOKEN;
+  }
+
+  return nextSiteContent;
+}
+
+function writeImageChunks_(spreadsheet, imageData) {
+  const sheet = getOrCreateSheet_(spreadsheet, IMAGE_SHEET);
+  sheet.clear();
+  sheet.getRange(1, 1, 1, 2).setValues([["index", "chunk"]]);
+
+  const rows = [];
+  for (let index = 0; index < imageData.length; index += IMAGE_CHUNK_SIZE) {
+    rows.push([rows.length, imageData.slice(index, index + IMAGE_CHUNK_SIZE)]);
+  }
+
+  if (rows.length) {
+    sheet.getRange(2, 1, rows.length, 2).setValues(rows);
+  }
+}
+
+function readImageChunks_(spreadsheet) {
+  const sheet = spreadsheet.getSheetByName(IMAGE_SHEET);
+  if (!sheet) return "";
+
+  const values = sheet.getDataRange().getValues().slice(1);
+  if (!values.length) return "";
+
+  return values
+    .sort(function (a, b) {
+      return Number(a[0]) - Number(b[0]);
+    })
+    .map(function (row) {
+      return row[1] || "";
+    })
+    .join("");
 }
 
 function writeReservationSheet_(spreadsheet, reservations) {
