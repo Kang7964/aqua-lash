@@ -172,14 +172,7 @@ slotForm.addEventListener("submit", (event) => {
 
 contentForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  siteContent = {
-    eyebrow: contentEyebrow.value.trim(),
-    title: contentTitle.value.trim(),
-    description: contentDescription.value.trim(),
-    primaryButton: contentPrimaryButton.value.trim(),
-    secondaryButton: contentSecondaryButton.value.trim(),
-    imageUrl: siteContent.imageUrl || defaultSiteContent.imageUrl,
-  };
+  siteContent = getContentFormState();
   renderSiteContent();
   persistState();
   contentMessage.textContent = "首頁內容已儲存。";
@@ -191,10 +184,11 @@ contentImageFile.addEventListener("change", async () => {
 
   contentImageStatus.textContent = "正在處理圖片...";
   try {
+    siteContent = getContentFormState();
     siteContent.imageUrl = await compressImageToDataUrl(file);
     renderSiteContent();
     persistState();
-    contentImageStatus.textContent = "圖片已上傳並套用。";
+    contentImageStatus.textContent = "圖片已上傳並套用，請等 3 秒再重新整理。";
   } catch (error) {
     contentImageStatus.textContent = "圖片處理失敗，請換一張較小的圖片再試。";
   } finally {
@@ -558,17 +552,46 @@ function cloudGet(action) {
 }
 
 function cloudPost(action, payload) {
-  const formData = new FormData();
-  formData.append("action", action);
-  formData.append("payload", JSON.stringify(payload));
+  const iframeName = "aquaLashCloudFrame";
+  let iframe = document.querySelector(`iframe[name="${iframeName}"]`);
 
-  fetch(CLOUD_API_URL, {
-    method: "POST",
-    mode: "no-cors",
-    body: formData,
-  }).catch(() => {
-    formMessage.textContent = "雲端儲存失敗，資料已先保存在這台裝置。";
-  });
+  if (!iframe) {
+    iframe = document.createElement("iframe");
+    iframe.name = iframeName;
+    iframe.className = "is-hidden";
+    iframe.setAttribute("aria-hidden", "true");
+    document.body.appendChild(iframe);
+  }
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = CLOUD_API_URL;
+  form.target = iframeName;
+  form.className = "is-hidden";
+  appendHiddenInput(form, "action", action);
+  appendHiddenInput(form, "payload", JSON.stringify(payload));
+  document.body.appendChild(form);
+  form.submit();
+  window.setTimeout(() => form.remove(), 1000);
+}
+
+function appendHiddenInput(form, name, value) {
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = name;
+  input.value = value;
+  form.appendChild(input);
+}
+
+function getContentFormState() {
+  return {
+    eyebrow: contentEyebrow.value.trim(),
+    title: contentTitle.value.trim(),
+    description: contentDescription.value.trim(),
+    primaryButton: contentPrimaryButton.value.trim(),
+    secondaryButton: contentSecondaryButton.value.trim(),
+    imageUrl: siteContent.imageUrl || defaultSiteContent.imageUrl,
+  };
 }
 
 function compressImageToDataUrl(file) {
@@ -580,8 +603,8 @@ function compressImageToDataUrl(file) {
       image.onerror = reject;
       image.onload = () => {
         const canvas = document.createElement("canvas");
-        const maxWidth = 1200;
-        const maxHeight = 900;
+        const maxWidth = 1000;
+        const maxHeight = 750;
         const ratio = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
         canvas.width = Math.max(1, Math.round(image.width * ratio));
         canvas.height = Math.max(1, Math.round(image.height * ratio));
@@ -589,9 +612,9 @@ function compressImageToDataUrl(file) {
         const context = canvas.getContext("2d");
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-        let quality = 0.82;
+        let quality = 0.78;
         let dataUrl = canvas.toDataURL("image/jpeg", quality);
-        while (dataUrl.length > 45000 && quality > 0.35) {
+        while (dataUrl.length > 32000 && quality > 0.3) {
           quality -= 0.08;
           dataUrl = canvas.toDataURL("image/jpeg", quality);
         }
