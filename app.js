@@ -15,6 +15,7 @@ const defaultSiteContent = {
   description: "日式睫毛嫁接與補睫服務，選擇想要的款式與時段後留下聯絡方式，我們會再與你確認細節。",
   primaryButton: "立即預約",
   secondaryButton: "查看服務",
+  notePlaceholder: "想做自然款、濃密款，或需要先卸睫都可以寫在這裡",
   imageUrl: "https://images.pexels.com/photos/34930118/pexels-photo-34930118.jpeg?auto=compress&cs=tinysrgb&w=1800",
 };
 
@@ -63,6 +64,7 @@ const heroTitle = document.querySelector("#heroTitle");
 const heroDescription = document.querySelector("#heroDescription");
 const heroPrimaryButton = document.querySelector("#heroPrimaryButton");
 const heroSecondaryButton = document.querySelector("#heroSecondaryButton");
+const noteInput = document.querySelector("#note");
 const serviceSelect = document.querySelector("#service");
 const dateSelect = document.querySelector("#dateSelect");
 const slotGrid = document.querySelector("#slotGrid");
@@ -98,10 +100,31 @@ const contentTitle = document.querySelector("#contentTitle");
 const contentDescription = document.querySelector("#contentDescription");
 const contentPrimaryButton = document.querySelector("#contentPrimaryButton");
 const contentSecondaryButton = document.querySelector("#contentSecondaryButton");
+const contentNotePlaceholder = document.querySelector("#contentNotePlaceholder");
 const contentImageFile = document.querySelector("#contentImageFile");
 const contentImageStatus = document.querySelector("#contentImageStatus");
 const contentMessage = document.querySelector("#contentMessage");
 const resetContentButton = document.querySelector("#resetContentButton");
+const cropModal = document.querySelector("#cropModal");
+const cropStage = document.querySelector("#cropStage");
+const cropImage = document.querySelector("#cropImage");
+const cropZoom = document.querySelector("#cropZoom");
+const applyCropButton = document.querySelector("#applyCropButton");
+const cancelCropButton = document.querySelector("#cancelCropButton");
+
+let cropState = {
+  image: null,
+  imageUrl: "",
+  baseScale: 1,
+  zoom: 1,
+  x: 0,
+  y: 0,
+  pointerId: null,
+  dragStartX: 0,
+  dragStartY: 0,
+  startX: 0,
+  startY: 0,
+};
 
 renderSiteContent();
 renderServices();
@@ -182,18 +205,62 @@ contentImageFile.addEventListener("change", async () => {
   const file = contentImageFile.files && contentImageFile.files[0];
   if (!file) return;
 
-  contentImageStatus.textContent = "正在處理圖片...";
+  contentImageStatus.textContent = "正在開啟裁切工具...";
   try {
     siteContent = getContentFormState();
-    siteContent.imageUrl = await compressImageToDataUrl(file);
-    renderSiteContent();
-    persistState();
-    contentImageStatus.textContent = "圖片已上傳並套用，請等 3 秒再重新整理。";
+    await openCropModal(file);
   } catch (error) {
-    contentImageStatus.textContent = "圖片處理失敗，請換一張較小的圖片再試。";
+    contentImageStatus.textContent = "圖片讀取失敗，請換一張 JPG 或 PNG 再試。";
   } finally {
     contentImageFile.value = "";
   }
+});
+
+cropZoom.addEventListener("input", () => {
+  cropState.zoom = Number(cropZoom.value) || 1;
+  clampCropPosition();
+  renderCropPreview();
+});
+
+cropStage.addEventListener("pointerdown", (event) => {
+  if (!cropState.image) return;
+  cropState.pointerId = event.pointerId;
+  cropState.dragStartX = event.clientX;
+  cropState.dragStartY = event.clientY;
+  cropState.startX = cropState.x;
+  cropState.startY = cropState.y;
+  cropStage.setPointerCapture(event.pointerId);
+  cropStage.classList.add("is-dragging");
+});
+
+cropStage.addEventListener("pointermove", (event) => {
+  if (cropState.pointerId !== event.pointerId) return;
+  cropState.x = cropState.startX + event.clientX - cropState.dragStartX;
+  cropState.y = cropState.startY + event.clientY - cropState.dragStartY;
+  clampCropPosition();
+  renderCropPreview();
+});
+
+cropStage.addEventListener("pointerup", endCropDrag);
+cropStage.addEventListener("pointercancel", endCropDrag);
+
+applyCropButton.addEventListener("click", () => {
+  if (!cropState.image) return;
+  try {
+    siteContent.imageUrl = createCroppedImageDataUrl();
+    closeCropModal();
+    renderSiteContent();
+    persistState();
+    contentImageStatus.textContent = "圖片已裁切並套用，請等 3 秒再重新整理。";
+  } catch (error) {
+    contentImageStatus.textContent = "圖片處理失敗，請把照片裁小一點或換一張再試。";
+  }
+});
+
+cancelCropButton.addEventListener("click", closeCropModal);
+
+cropModal.addEventListener("click", (event) => {
+  if (event.target === cropModal) closeCropModal();
 });
 
 resetContentButton.addEventListener("click", () => {
@@ -273,15 +340,17 @@ function renderSiteContent() {
   heroPrimaryButton.textContent = siteContent.primaryButton || defaultSiteContent.primaryButton;
   heroSecondaryButton.textContent = siteContent.secondaryButton || defaultSiteContent.secondaryButton;
   hero.style.setProperty("--hero-image", `url("${siteContent.imageUrl || defaultSiteContent.imageUrl}")`);
+  noteInput.placeholder = siteContent.notePlaceholder || defaultSiteContent.notePlaceholder;
 
   contentEyebrow.value = siteContent.eyebrow || "";
   contentTitle.value = siteContent.title || "";
   contentDescription.value = siteContent.description || "";
   contentPrimaryButton.value = siteContent.primaryButton || "";
   contentSecondaryButton.value = siteContent.secondaryButton || "";
+  contentNotePlaceholder.value = siteContent.notePlaceholder || "";
   contentImageStatus.textContent = siteContent.imageUrl && siteContent.imageUrl.startsWith("data:")
-    ? "目前使用已上傳圖片。重新選擇檔案即可更換。"
-    : "可上傳 JPG、PNG，系統會自動壓縮並調整成適合手機與電腦的背景圖。";
+    ? "目前使用已上傳圖片。重新選擇檔案即可裁切更換。"
+    : "選擇圖片後可先裁切、拖曳位置與放大縮小，再套用到首頁。";
 }
 
 function renderServices() {
@@ -590,8 +659,117 @@ function getContentFormState() {
     description: contentDescription.value.trim(),
     primaryButton: contentPrimaryButton.value.trim(),
     secondaryButton: contentSecondaryButton.value.trim(),
+    notePlaceholder: contentNotePlaceholder.value.trim(),
     imageUrl: siteContent.imageUrl || defaultSiteContent.imageUrl,
   };
+}
+
+function openCropModal(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = reject;
+      image.onload = () => {
+        cropState.image = image;
+        cropState.imageUrl = reader.result;
+        cropState.zoom = 1;
+        cropState.x = 0;
+        cropState.y = 0;
+        cropState.pointerId = null;
+        cropImage.src = reader.result;
+        cropZoom.value = "1";
+        cropModal.classList.remove("is-hidden");
+        requestAnimationFrame(() => {
+          resetCropScale();
+          renderCropPreview();
+          resolve();
+        });
+      };
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function closeCropModal() {
+  cropModal.classList.add("is-hidden");
+  cropStage.classList.remove("is-dragging");
+  cropImage.removeAttribute("src");
+  cropState.image = null;
+  cropState.imageUrl = "";
+  cropState.pointerId = null;
+}
+
+function endCropDrag(event) {
+  if (cropState.pointerId !== event.pointerId) return;
+  cropState.pointerId = null;
+  cropStage.classList.remove("is-dragging");
+}
+
+function resetCropScale() {
+  if (!cropState.image) return;
+  const rect = cropStage.getBoundingClientRect();
+  cropState.baseScale = Math.max(rect.width / cropState.image.width, rect.height / cropState.image.height);
+  cropState.x = 0;
+  cropState.y = 0;
+  clampCropPosition();
+}
+
+function clampCropPosition() {
+  if (!cropState.image) return;
+  const rect = cropStage.getBoundingClientRect();
+  const displayWidth = cropState.image.width * cropState.baseScale * cropState.zoom;
+  const displayHeight = cropState.image.height * cropState.baseScale * cropState.zoom;
+  const maxX = Math.max(0, (displayWidth - rect.width) / 2);
+  const maxY = Math.max(0, (displayHeight - rect.height) / 2);
+  cropState.x = Math.min(maxX, Math.max(-maxX, cropState.x));
+  cropState.y = Math.min(maxY, Math.max(-maxY, cropState.y));
+}
+
+function renderCropPreview() {
+  if (!cropState.image) return;
+  const displayWidth = cropState.image.width * cropState.baseScale;
+  const displayHeight = cropState.image.height * cropState.baseScale;
+  cropImage.style.width = `${displayWidth}px`;
+  cropImage.style.height = `${displayHeight}px`;
+  cropImage.style.transform = `translate(-50%, -50%) translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.zoom})`;
+}
+
+function createCroppedImageDataUrl() {
+  const rect = cropStage.getBoundingClientRect();
+  const outputWidth = 1200;
+  const outputHeight = Math.round(outputWidth * rect.height / rect.width);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  const renderScale = outputWidth / rect.width;
+  const displayWidth = cropState.image.width * cropState.baseScale * cropState.zoom;
+  const displayHeight = cropState.image.height * cropState.baseScale * cropState.zoom;
+  const left = rect.width / 2 - displayWidth / 2 + cropState.x;
+  const top = rect.height / 2 - displayHeight / 2 + cropState.y;
+
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
+  context.fillStyle = "#151312";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(
+    cropState.image,
+    left * renderScale,
+    top * renderScale,
+    displayWidth * renderScale,
+    displayHeight * renderScale
+  );
+
+  let quality = 0.78;
+  let dataUrl = canvas.toDataURL("image/jpeg", quality);
+  while (dataUrl.length > 32000 && quality > 0.3) {
+    quality -= 0.08;
+    dataUrl = canvas.toDataURL("image/jpeg", quality);
+  }
+
+  if (dataUrl.length <= 45000) return dataUrl;
+  throw new Error("Image is too large");
 }
 
 function compressImageToDataUrl(file) {

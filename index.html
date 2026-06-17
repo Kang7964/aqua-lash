@@ -46,6 +46,28 @@
       </form>
     </div>
 
+    <div class="crop-modal is-hidden" id="cropModal" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+      <div class="crop-card">
+        <div class="section-heading">
+          <p class="eyebrow">Image</p>
+          <h2 id="cropTitle">調整首頁大圖</h2>
+        </div>
+        <div class="crop-stage" id="cropStage">
+          <img id="cropImage" alt="" />
+          <div class="crop-frame" aria-hidden="true"></div>
+        </div>
+        <label class="crop-zoom-control">
+          <span>放大縮小</span>
+          <input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1" />
+        </label>
+        <p class="field-help">拖曳照片調整位置，框線內看到的畫面會成為首頁背景。</p>
+        <div class="service-actions">
+          <button class="secondary-button" id="applyCropButton" type="button">套用圖片</button>
+          <button class="text-button" id="cancelCropButton" type="button">取消</button>
+        </div>
+      </div>
+    </div>
+
     <main id="top">
       <section class="hero" aria-labelledby="heroTitle">
         <div class="hero-copy">
@@ -180,9 +202,13 @@
             <textarea id="contentDescription" rows="3" placeholder="輸入首頁介紹文字" required></textarea>
           </label>
           <label class="content-wide-field">
+            <span>預約備註欄提示文字</span>
+            <textarea id="contentNotePlaceholder" rows="2" placeholder="例如：想做自然款、濃密款，或需要先卸睫都可以寫在這裡"></textarea>
+          </label>
+          <label class="content-wide-field">
             <span>首頁大圖</span>
             <input id="contentImageFile" type="file" accept="image/*" />
-            <small class="field-help" id="contentImageStatus">可上傳 JPG、PNG，系統會自動壓縮並調整成適合手機與電腦的背景圖。</small>
+            <small class="field-help" id="contentImageStatus">選擇圖片後可先裁切、拖曳位置與放大縮小，再套用到首頁。</small>
           </label>
           <div class="service-actions">
             <button class="secondary-button" type="submit">儲存首頁內容</button>

@@ -70,6 +70,17 @@ button {
   z-index: 50;
 }
 
+.crop-modal {
+  align-items: center;
+  background: rgba(35, 33, 31, 0.64);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 18px;
+  position: fixed;
+  z-index: 60;
+}
+
 .password-card {
   background: var(--paper);
   border: 1px solid rgba(233, 225, 217, 0.95);
@@ -80,6 +91,73 @@ button {
   max-width: 430px;
   padding: 26px;
   width: min(100%, 430px);
+}
+
+.crop-card {
+  background: var(--paper);
+  border: 1px solid rgba(233, 225, 217, 0.95);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  max-height: calc(100svh - 36px);
+  overflow: auto;
+  padding: 24px;
+  width: min(100%, 900px);
+}
+
+.crop-stage {
+  aspect-ratio: 16 / 9;
+  background: #151312;
+  border-radius: 8px;
+  cursor: grab;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  user-select: none;
+  width: 100%;
+}
+
+.crop-stage.is-dragging {
+  cursor: grabbing;
+}
+
+.crop-stage img {
+  left: 50%;
+  max-width: none;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.crop-frame {
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.28);
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.crop-frame::before,
+.crop-frame::after {
+  background:
+    linear-gradient(90deg, transparent 33.2%, rgba(255, 255, 255, 0.55) 33.2%, rgba(255, 255, 255, 0.55) 33.7%, transparent 33.7%, transparent 66.2%, rgba(255, 255, 255, 0.55) 66.2%, rgba(255, 255, 255, 0.55) 66.7%, transparent 66.7%),
+    linear-gradient(180deg, transparent 33.2%, rgba(255, 255, 255, 0.55) 33.2%, rgba(255, 255, 255, 0.55) 33.7%, transparent 33.7%, transparent 66.2%, rgba(255, 255, 255, 0.55) 66.2%, rgba(255, 255, 255, 0.55) 66.7%, transparent 66.7%);
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.crop-zoom-control {
+  display: grid;
+  gap: 8px;
+}
+
+.crop-zoom-control input {
+  min-height: 34px;
+  padding: 0;
 }
 
 .password-message {
