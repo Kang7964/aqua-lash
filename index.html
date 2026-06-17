@@ -84,15 +84,15 @@
       <section class="studio-strip" aria-label="店家資訊">
         <div>
           <span>Service</span>
-          <strong>日式嫁接 / 補睫 / 卸睫</strong>
+          <strong id="studioServiceText">日式嫁接 / 補睫 / 卸睫</strong>
         </div>
         <div>
           <span>Location</span>
-          <strong>台北預約制</strong>
+          <strong id="studioLocationText">台北預約制</strong>
         </div>
         <div>
           <span>Status</span>
-          <strong>開放預約中</strong>
+          <strong id="studioStatusText">開放預約中</strong>
         </div>
       </section>
 
@@ -200,6 +200,18 @@
           <label class="content-wide-field">
             <span>介紹文字</span>
             <textarea id="contentDescription" rows="3" placeholder="輸入首頁介紹文字" required></textarea>
+          </label>
+          <label>
+            <span>Service 顯示文字</span>
+            <input id="contentStudioService" placeholder="例如：日式嫁接 / 補睫 / 卸睫" />
+          </label>
+          <label>
+            <span>Location 顯示文字</span>
+            <input id="contentStudioLocation" placeholder="例如：台北預約制" />
+          </label>
+          <label>
+            <span>Status 顯示文字</span>
+            <input id="contentStudioStatus" placeholder="例如：開放預約中" />
           </label>
           <label class="content-wide-field">
             <span>預約備註欄提示文字</span>

@@ -16,6 +16,9 @@ const defaultSiteContent = {
   primaryButton: "立即預約",
   secondaryButton: "查看服務",
   notePlaceholder: "想做自然款、濃密款，或需要先卸睫都可以寫在這裡",
+  studioService: "日式嫁接 / 補睫 / 卸睫",
+  studioLocation: "台北預約制",
+  studioStatus: "開放預約中",
   imageUrl: "https://images.pexels.com/photos/34930118/pexels-photo-34930118.jpeg?auto=compress&cs=tinysrgb&w=1800",
   mobileImageUrl: "",
 };
@@ -65,6 +68,9 @@ const heroTitle = document.querySelector("#heroTitle");
 const heroDescription = document.querySelector("#heroDescription");
 const heroPrimaryButton = document.querySelector("#heroPrimaryButton");
 const heroSecondaryButton = document.querySelector("#heroSecondaryButton");
+const studioServiceText = document.querySelector("#studioServiceText");
+const studioLocationText = document.querySelector("#studioLocationText");
+const studioStatusText = document.querySelector("#studioStatusText");
 const noteInput = document.querySelector("#note");
 const serviceSelect = document.querySelector("#service");
 const dateSelect = document.querySelector("#dateSelect");
@@ -101,6 +107,9 @@ const contentTitle = document.querySelector("#contentTitle");
 const contentDescription = document.querySelector("#contentDescription");
 const contentPrimaryButton = document.querySelector("#contentPrimaryButton");
 const contentSecondaryButton = document.querySelector("#contentSecondaryButton");
+const contentStudioService = document.querySelector("#contentStudioService");
+const contentStudioLocation = document.querySelector("#contentStudioLocation");
+const contentStudioStatus = document.querySelector("#contentStudioStatus");
 const contentNotePlaceholder = document.querySelector("#contentNotePlaceholder");
 const contentImageFile = document.querySelector("#contentImageFile");
 const contentImageStatus = document.querySelector("#contentImageStatus");
@@ -368,6 +377,11 @@ function renderSiteContent() {
   heroDescription.textContent = siteContent.description || defaultSiteContent.description;
   heroPrimaryButton.textContent = siteContent.primaryButton || defaultSiteContent.primaryButton;
   heroSecondaryButton.textContent = siteContent.secondaryButton || defaultSiteContent.secondaryButton;
+  heroPrimaryButton.setAttribute("href", "#booking");
+  heroSecondaryButton.setAttribute("href", "#services");
+  studioServiceText.textContent = siteContent.studioService || defaultSiteContent.studioService;
+  studioLocationText.textContent = siteContent.studioLocation || defaultSiteContent.studioLocation;
+  studioStatusText.textContent = siteContent.studioStatus || defaultSiteContent.studioStatus;
   hero.style.setProperty("--hero-image", `url("${siteContent.imageUrl || defaultSiteContent.imageUrl}")`);
   hero.style.setProperty("--hero-mobile-image", `url("${siteContent.mobileImageUrl || siteContent.imageUrl || defaultSiteContent.imageUrl}")`);
   noteInput.placeholder = siteContent.notePlaceholder || defaultSiteContent.notePlaceholder;
@@ -377,6 +391,9 @@ function renderSiteContent() {
   contentDescription.value = siteContent.description || "";
   contentPrimaryButton.value = siteContent.primaryButton || "";
   contentSecondaryButton.value = siteContent.secondaryButton || "";
+  contentStudioService.value = siteContent.studioService || "";
+  contentStudioLocation.value = siteContent.studioLocation || "";
+  contentStudioStatus.value = siteContent.studioStatus || "";
   contentNotePlaceholder.value = siteContent.notePlaceholder || "";
   contentImageStatus.textContent = siteContent.imageUrl && siteContent.imageUrl.startsWith("data:")
     ? "目前使用已上傳圖片。重新選擇檔案即可裁切更換。"
@@ -692,6 +709,9 @@ function getContentFormState() {
     description: contentDescription.value.trim(),
     primaryButton: contentPrimaryButton.value.trim(),
     secondaryButton: contentSecondaryButton.value.trim(),
+    studioService: contentStudioService.value.trim(),
+    studioLocation: contentStudioLocation.value.trim(),
+    studioStatus: contentStudioStatus.value.trim(),
     notePlaceholder: contentNotePlaceholder.value.trim(),
     imageUrl: siteContent.imageUrl || defaultSiteContent.imageUrl,
     mobileImageUrl: siteContent.mobileImageUrl || "",

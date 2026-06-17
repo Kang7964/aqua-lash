@@ -251,6 +251,12 @@ main {
   padding-bottom: 58px;
 }
 
+#booking,
+#services,
+.owner-panel {
+  scroll-margin-top: 108px;
+}
+
 .hero {
   align-items: end;
   background:
