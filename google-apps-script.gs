@@ -9,6 +9,19 @@ const DEFAULT_STATE = {
   reservations: [],
 };
 
+const RESERVATION_HEADERS = [
+  "Created At",
+  "Name",
+  "Phone",
+  "Line / IG",
+  "Service",
+  "Date",
+  "Time",
+  "Location / Tag",
+  "Note",
+  "Reservation ID",
+];
+
 function doGet(event) {
   const action = event.parameter.action || "state";
   const callback = event.parameter.callback || "callback";
@@ -63,9 +76,7 @@ function setupAquaLashSheets() {
 
   const reservationSheet = getOrCreateSheet_(spreadsheet, RESERVATION_SHEET);
   reservationSheet.clear();
-  reservationSheet.getRange(1, 1, 1, 10).setValues([
-    ["建立時間", "姓名", "電話", "Line / IG", "服務", "日期", "時間", "地點/標籤", "備註", "預約ID"],
-  ]);
+  reservationSheet.getRange(1, 1, 1, RESERVATION_HEADERS.length).setValues([RESERVATION_HEADERS]);
 }
 
 function getState() {
@@ -113,9 +124,7 @@ function saveState(state) {
 function writeReservationSheet_(spreadsheet, reservations) {
   const sheet = getOrCreateSheet_(spreadsheet, RESERVATION_SHEET);
   sheet.clear();
-  sheet.getRange(1, 1, 1, 10).setValues([
-    ["建立時間", "姓名", "電話", "Line / IG", "服務", "日期", "時間", "地點/標籤", "備註", "預約ID"],
-  ]);
+  sheet.getRange(1, 1, 1, RESERVATION_HEADERS.length).setValues([RESERVATION_HEADERS]);
 
   if (!reservations.length) return;
 
@@ -131,7 +140,7 @@ function writeReservationSheet_(spreadsheet, reservations) {
     item.note || "",
     item.id || "",
   ]);
-  sheet.getRange(2, 1, rows.length, 10).setValues(rows);
+  sheet.getRange(2, 1, rows.length, RESERVATION_HEADERS.length).setValues(rows);
 }
 
 function getOrCreateSheet_(spreadsheet, name) {
