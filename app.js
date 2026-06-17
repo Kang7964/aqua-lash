@@ -605,19 +605,27 @@ function compressImageToDataUrl(file) {
         const canvas = document.createElement("canvas");
         const maxWidth = 1000;
         const maxHeight = 750;
-        const ratio = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
-        canvas.width = Math.max(1, Math.round(image.width * ratio));
-        canvas.height = Math.max(1, Math.round(image.height * ratio));
-
         const context = canvas.getContext("2d");
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-        let quality = 0.78;
-        let dataUrl = canvas.toDataURL("image/jpeg", quality);
-        while (dataUrl.length > 32000 && quality > 0.3) {
-          quality -= 0.08;
+        let ratio = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
+        let dataUrl = "";
+
+        do {
+          canvas.width = Math.max(1, Math.round(image.width * ratio));
+          canvas.height = Math.max(1, Math.round(image.height * ratio));
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+          let quality = 0.78;
           dataUrl = canvas.toDataURL("image/jpeg", quality);
-        }
+          while (dataUrl.length > 32000 && quality > 0.3) {
+            quality -= 0.08;
+            dataUrl = canvas.toDataURL("image/jpeg", quality);
+          }
+
+          ratio *= 0.82;
+        } while (dataUrl.length > 32000 && ratio > 0.2);
+
+        if (dataUrl.length > 45000) throw new Error("Image is too large");
         resolve(dataUrl);
       };
       image.src = reader.result;
