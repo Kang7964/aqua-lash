@@ -509,18 +509,20 @@ function renderSlots() {
 }
 
 function renderOwnerSlots() {
-  if (!slots.length) {
-    ownerSlotList.innerHTML = `<div class="empty-state">尚未建立任何時段。</div>`;
+  const openSlots = slots.filter((slot) => slot.available);
+
+  if (!openSlots.length) {
+    ownerSlotList.innerHTML = `<div class="empty-state">目前沒有開放中的時段。</div>`;
     return;
   }
 
-  ownerSlotList.innerHTML = slots
+  ownerSlotList.innerHTML = openSlots
     .map(
       (slot) => `
         <article class="owner-item">
           <div>
             <strong>${formatDate(slot.date)} ${escapeHtml(slot.time)}</strong>
-            <span>${escapeHtml(slot.label || "無標籤")} · ${slot.available ? "開放中" : "已被預約"}</span>
+            <span>${escapeHtml(slot.label || "無標籤")} · 開放中</span>
           </div>
           <button class="danger-button" type="button" data-delete-slot="${slot.id}">移除</button>
         </article>
